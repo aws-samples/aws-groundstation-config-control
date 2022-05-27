@@ -8,11 +8,14 @@ The tool can:
 1. Show details about an AWS Ground Station mission profiles
 2. Update the following AWS Ground Station mission profile parameters:
    - Mission profile name
+   - Uplink power
+   - Uplink center frequency
+   - DigIF Downlink center frequency
+   - DigIF Downlink bandwidth
    - Minimum viable contact duration
    - Contact prepass duration
    - Contact postpass duration
    - Antenna tracking
-   - Uplink power
 
 This tool is meant a debugging aid and should cannot be used to deploy full AWS Ground Station mission profiles. For such deployments the best practice is to use AWS CloudFormation templates, which can be source-code controlled. Please be mindful of any configuration drift that is introduced.
 
