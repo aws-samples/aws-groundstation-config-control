@@ -211,11 +211,14 @@ def update_mission_profile(gs_client, mission_profile_id):
             "message": "What would you like to update?",
             "choices": [
                 "Mission profile name",
+                "Uplink power",
+                "Uplink center frequency",
+                "DigIF Downlink center frequency",
+                "DigIF Downlink bandwidth",
                 "Minimum viable contact duration",
                 "Contact prepass duration",
                 "Contact postpass duration",
                 "Antenna tracking",
-                "Uplink power",
                 "Other",
                 "Quit",
             ],
@@ -227,6 +230,12 @@ def update_mission_profile(gs_client, mission_profile_id):
 
     if update == "Mission profile name":
         change_mission_profile(gs_client, mission_profile_id, "name")
+    elif update == "Uplink center frequency":
+        change_uplink_center_frequency(gs_client, mission_profile_id)
+    elif update == "DigIF Downlink center frequency":
+        change_downlink_center_frequency(gs_client, mission_profile_id)
+    elif update == "DigIF Downlink bandwidth":
+        change_downlink_bandwidth(gs_client, mission_profile_id)
     elif update == "Minimum viable contact duration":
         change_mission_profile(gs_client, mission_profile_id, "minimum contact")
     elif update == "Contact prepass duration":
@@ -472,6 +481,267 @@ def change_uplink_power(gs_client, mission_profile_id):
     main()
 
 
+def change_uplink_center_frequency(gs_client, mission_profile_id):
+    uplink_conflig_id = ""
+
+    profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+
+    for config_pair in profile_data["dataflowEdges"]:
+        for config in config_pair:
+            config_id = config.split("/")[2]
+            config_type = config.split("/")[1]
+
+            if config_type == "antenna-uplink":
+                uplink_conflig_id = config_id
+                break
+
+    if not uplink_conflig_id:
+        print(
+            "There is no antenna uplink config in this mission profile. Exiting to main menu."
+        )
+        main()
+
+    uplink_config = gs_client.get_config(
+        configId=uplink_conflig_id, configType="antenna-uplink"
+    )
+
+    current_center_frequency = uplink_config["configData"]["antennaUplinkConfig"][
+        "spectrumConfig"
+    ]["centerFrequency"]["value"]
+    center_frequency_unit = uplink_config["configData"]["antennaUplinkConfig"][
+        "spectrumConfig"
+    ]["centerFrequency"]["units"]
+
+    center_frequency_question = [
+        {
+            "type": "input",
+            "name": "center_frequency",
+            "message": "The current uplink center frequency is "
+            + str(current_center_frequency)
+            + " "
+            + str(center_frequency_unit)
+            + "\n  Enter the desired uplink center frequency in MHz. You must be licenced for this frequency.",
+            "validate": UplinkFrequencyValidator,
+        }
+    ]
+
+    center_frequency_answer = prompt(center_frequency_question)
+    center_frequency = float(center_frequency_answer["center_frequency"])
+
+    try:
+        response = gs_client.update_config(
+            configData={
+                "antennaUplinkConfig": {
+                    "spectrumConfig": {
+                        "centerFrequency": {
+                            "units": "MHz",
+                            "value": center_frequency,
+                        },
+                        "polarization": uplink_config["configData"][
+                            "antennaUplinkConfig"
+                        ]["spectrumConfig"]["polarization"],
+                    },
+                    "targetEirp": {
+                        "units": uplink_config["configData"]["antennaUplinkConfig"][
+                            "targetEirp"
+                        ]["units"],
+                        "value": uplink_config["configData"]["antennaUplinkConfig"][
+                            "targetEirp"
+                        ]["value"],
+                    },
+                    "transmitDisabled": uplink_config["configData"][
+                        "antennaUplinkConfig"
+                    ]["transmitDisabled"],
+                },
+            },
+            configId=uplink_config["configId"],
+            configType=uplink_config["configType"],
+            name=uplink_config["name"],
+        )
+    except Exception as e:
+        print(e)
+    else:
+        print(
+            "Update complete. The uplink center frequency has been set to: "
+            + str(center_frequency)
+            + " MHz."
+        )
+
+    main()
+
+
+def change_downlink_center_frequency(gs_client, mission_profile_id):
+    downlink_conflig_id = ""
+
+    profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+
+    for config_pair in profile_data["dataflowEdges"]:
+        for config in config_pair:
+            config_id = config.split("/")[2]
+            config_type = config.split("/")[1]
+
+            if config_type == "antenna-downlink":
+                downlink_conflig_id = config_id
+                break
+
+    if not downlink_conflig_id:
+        print(
+            "There is no antenna digIf downlink config in this mission profile. Exiting to main menu."
+        )
+        main()
+
+    downlink_config = gs_client.get_config(
+        configId=downlink_conflig_id, configType="antenna-downlink"
+    )
+
+    current_center_frequency = downlink_config["configData"]["antennaDownlinkConfig"][
+        "spectrumConfig"
+    ]["centerFrequency"]["value"]
+    center_frequency_unit = downlink_config["configData"]["antennaDownlinkConfig"][
+        "spectrumConfig"
+    ]["centerFrequency"]["units"]
+
+    center_frequency_question = [
+        {
+            "type": "input",
+            "name": "center_frequency",
+            "message": "The current downlink center frequency is "
+            + str(current_center_frequency)
+            + " "
+            + str(center_frequency_unit)
+            + "\n  Enter the desired downlink center frequency in MHz. You must be licenced for this frequency.",
+            "validate": DownlinkFrequencyValidator,
+        }
+    ]
+
+    center_frequency_answer = prompt(center_frequency_question)
+    center_frequency = float(center_frequency_answer["center_frequency"])
+
+    try:
+        response = gs_client.update_config(
+            configData={
+                "antennaDownlinkConfig": {
+                    "spectrumConfig": {
+                        "centerFrequency": {
+                            "units": "MHz",
+                            "value": center_frequency,
+                        },
+                        "bandwidth": {
+                            "units": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["bandwidth"]["units"],
+                            "value": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["bandwidth"]["value"],
+                        },
+                        "polarization": downlink_config["configData"][
+                            "antennaDownlinkConfig"
+                        ]["spectrumConfig"]["polarization"],
+                    }
+                },
+            },
+            configId=downlink_config["configId"],
+            configType=downlink_config["configType"],
+            name=downlink_config["name"],
+        )
+    except Exception as e:
+        print(e)
+    else:
+        print(
+            "Update complete. The downlink center frequency has been set to: "
+            + str(center_frequency)
+            + " MHz."
+        )
+
+    main()
+
+
+def change_downlink_bandwidth(gs_client, mission_profile_id):
+    downlink_conflig_id = ""
+
+    profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+
+    for config_pair in profile_data["dataflowEdges"]:
+        for config in config_pair:
+            config_id = config.split("/")[2]
+            config_type = config.split("/")[1]
+
+            if config_type == "antenna-downlink":
+                downlink_conflig_id = config_id
+                break
+
+    if not downlink_conflig_id:
+        print(
+            "There is no antenna digIf downlink config in this mission profile. Exiting to main menu."
+        )
+        main()
+
+    downlink_config = gs_client.get_config(
+        configId=downlink_conflig_id, configType="antenna-downlink"
+    )
+
+    current_bandwidth = downlink_config["configData"]["antennaDownlinkConfig"][
+        "spectrumConfig"
+    ]["bandwidth"]["value"]
+    bandwidth_unit = downlink_config["configData"]["antennaDownlinkConfig"][
+        "spectrumConfig"
+    ]["bandwidth"]["units"]
+
+    bandwidth_question = [
+        {
+            "type": "input",
+            "name": "bandwidth",
+            "message": "The current downlink bandwidth is "
+            + str(current_bandwidth)
+            + " "
+            + str(bandwidth_unit)
+            + "\n  Enter the desired downlink bandwidth in kHz. You must be licenced for this bandwidth.",
+            "validate": DownlinkBandwidthValidator,
+        }
+    ]
+
+    bandwidth_answer = prompt(bandwidth_question)
+    bandwidth = float(bandwidth_answer["bandwidth"])
+
+    try:
+        response = gs_client.update_config(
+            configData={
+                "antennaDownlinkConfig": {
+                    "spectrumConfig": {
+                        "centerFrequency": {
+                            "units": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["centerFrequency"]["units"],
+                            "value": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["centerFrequency"]["value"],
+                        },
+                        "bandwidth": {
+                            "units": "kHz",
+                            "value": bandwidth,
+                        },
+                        "polarization": downlink_config["configData"][
+                            "antennaDownlinkConfig"
+                        ]["spectrumConfig"]["polarization"],
+                    }
+                },
+            },
+            configId=downlink_config["configId"],
+            configType=downlink_config["configType"],
+            name=downlink_config["name"],
+        )
+    except Exception as e:
+        print(e)
+    else:
+        print(
+            "Update complete. The downlink bandwidth frequency has been set to: "
+            + str(bandwidth)
+            + " kHz."
+        )
+
+    main()
+
+
 class DurationValidator(Validator):
     def validate(self, document):
         ok = regex.match("^([1-9]|[1-9][0-9]|[1-2][0-9][0-9]|^300)$", document.text)
@@ -498,6 +768,42 @@ class PowerValidator(Validator):
         if not ok:
             raise ValidationError(
                 message="Please enter a valid EIRP dBw value [20-50]",
+                cursor_position=len(document.text),
+            )
+
+
+class UplinkFrequencyValidator(Validator):
+    def validate(self, document):
+        ok = regex.match("^202[5-9]|20[3-9][0-9]|21[0-1][0-9]?$|^2120$", document.text)
+        if not ok:
+            raise ValidationError(
+                message="This uplink center frequency is not supported. Valid values are between 2025 to 2120 MHz, for which you are licenced.",
+                cursor_position=len(document.text),
+            )
+
+
+class DownlinkFrequencyValidator(Validator):
+    def validate(self, document):
+        ok = regex.match(
+            "^22[0-9][0-9]?$|^2300|77[5-9][0-9]|7[8-9][0-9][0-9]|8[0-3][0-9][0-9]|^8400$",
+            document.text,
+        )
+        if not ok:
+            raise ValidationError(
+                message="This downlink center frequency is not supported. Valid values are between 2200 to 2300 MHz and 7750 to 8400 MHz, for which you are licenced.",
+                cursor_position=len(document.text),
+            )
+
+
+class DownlinkBandwidthValidator(Validator):
+    def validate(self, document):
+        ok = regex.match(
+            "^[1-9][0-9]$|^[1-9][0-9][0-9]?$|^[1-9][0-9][0-9][0-9]?$|^[1-3][0-9][0-9][0-9][0-9]?$|^40000$",
+            document.text,
+        )
+        if not ok:
+            raise ValidationError(
+                message="This downlink bandwidth is not supported. Valid values are between 10 and 40000 kHz, for which you are licenced.",
                 cursor_position=len(document.text),
             )
 
