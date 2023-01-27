@@ -213,6 +213,7 @@ def update_mission_profile(gs_client, mission_profile_id):
                 "Mission profile name",
                 "Uplink power",
                 "Uplink center frequency",
+                "Uplink polarization",
                 "DigIF Downlink center frequency",
                 "DigIF Downlink bandwidth",
                 "Minimum viable contact duration",
@@ -232,6 +233,8 @@ def update_mission_profile(gs_client, mission_profile_id):
         change_mission_profile(gs_client, mission_profile_id, "name")
     elif update == "Uplink center frequency":
         change_uplink_center_frequency(gs_client, mission_profile_id)
+    elif update == "Uplink polarization":
+        change_uplink_polarization(gs_client, mission_profile_id)
     elif update == "DigIF Downlink center frequency":
         change_downlink_center_frequency(gs_client, mission_profile_id)
     elif update == "DigIF Downlink bandwidth":
@@ -651,6 +654,89 @@ def change_downlink_center_frequency(gs_client, mission_profile_id):
             "Update complete. The downlink center frequency has been set to: "
             + str(center_frequency)
             + " MHz."
+        )
+
+    main()
+
+def change_uplink_polarization(gs_client, mission_profile_id):
+    uplink_conflig_id = ""
+
+    profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+
+    for config_pair in profile_data["dataflowEdges"]:
+        for config in config_pair:
+            config_id = config.split("/")[2]
+            config_type = config.split("/")[1]
+
+            if config_type == "antenna-uplink":
+                uplink_conflig_id = config_id
+                break
+
+    if not uplink_conflig_id:
+        print(
+            "There is no antenna uplink config in this mission profile. Exiting to main menu."
+        )
+        main()
+
+    uplink_config = gs_client.get_config(
+        configId=uplink_conflig_id, configType="antenna-uplink"
+    )
+
+    current_polarization = uplink_config["configData"]["antennaUplinkConfig"]["spectrumConfig"]["polarization"]
+
+
+    polarization_question = [
+        {
+            "type": "list",
+            "name": "polarization",
+            "message": "The current uplink polarization is "
+            + str(current_polarization)
+            + "\n  Enter the desired uplink polarization.",
+            "choices": [
+                "RIGHT_HAND",
+                "LEFT_HAND"
+            ],
+        }
+    ]
+
+    polarization_answer = prompt(polarization_question)
+    polarization = polarization_answer["polarization"]
+
+
+    try:
+        response = gs_client.update_config(
+            configData={
+                "antennaUplinkConfig": {
+                    "spectrumConfig": {
+                        "centerFrequency": {
+                            "units": "MHz",
+                            "value": uplink_config["configData"]["antennaUplinkConfig"]["spectrumConfig"]["centerFrequency"]["value"],
+                        },
+                        "polarization": polarization,
+                    },
+                    "targetEirp": {
+                        "units": uplink_config["configData"]["antennaUplinkConfig"][
+                            "targetEirp"
+                        ]["units"],
+                        "value": uplink_config["configData"]["antennaUplinkConfig"][
+                            "targetEirp"
+                        ]["value"],
+                    },
+                    "transmitDisabled": uplink_config["configData"][
+                        "antennaUplinkConfig"
+                    ]["transmitDisabled"],
+                },
+            },
+            configId=uplink_config["configId"],
+            configType=uplink_config["configType"],
+            name=uplink_config["name"],
+        )
+    except Exception as e:
+        print(e)
+    else:
+        print(
+            "Update complete. The uplink polarization has been set to: "
+            + str(polarization)
         )
 
     main()
