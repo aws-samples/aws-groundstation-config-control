@@ -10,6 +10,7 @@ The tool can:
    - Mission profile name
    - Uplink power
    - Uplink center frequency
+   - Uplink polarization
    - DigIF Downlink center frequency
    - DigIF Downlink bandwidth
    - Minimum viable contact duration
