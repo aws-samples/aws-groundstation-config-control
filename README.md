@@ -11,6 +11,7 @@ The tool can:
    - Uplink power
    - Uplink center frequency
    - Uplink polarization
+   - Downlink polarization
    - DigIF Downlink center frequency
    - DigIF Downlink bandwidth
    - Minimum viable contact duration
