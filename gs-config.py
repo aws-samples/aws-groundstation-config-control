@@ -1017,7 +1017,7 @@ def main():
                 "Stockholm (eu-north-1)",
                 "Bahrain (me-south-1)",
                 "Sao Paulo (sa-east-1)",
-                "Singapore (ap-southeat-1)"
+                "Singapore (ap-southeast-1)"
             ],
         }
     ]
