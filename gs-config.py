@@ -798,19 +798,16 @@ def change_downlink_polarization(gs_client, mission_profile_id):
                             "units": "MHz",
                             "value": downlink_config["configData"]["antennaDownlinkConfig"]["spectrumConfig"]["centerFrequency"]["value"],
                         },
+                        "bandwidth": {
+                            "units": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["bandwidth"]["units"],
+                            "value": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["bandwidth"]["value"],
+                        },
                         "polarization": polarization,
                     },
-                    "targetEirp": {
-                        "units": downlink_config["configData"]["antennaDownlinkConfig"][
-                            "targetEirp"
-                        ]["units"],
-                        "value": downlink_config["configData"]["antennaDownlinkConfig"][
-                            "targetEirp"
-                        ]["value"],
-                    },
-                    "transmitDisabled": downlink_config["configData"][
-                        "antennaDownlinkConfig"
-                    ]["transmitDisabled"],
                 },
             },
             configId=downlink_config["configId"],
