@@ -214,6 +214,7 @@ def update_mission_profile(gs_client, mission_profile_id):
                 "Uplink power",
                 "Uplink center frequency",
                 "Uplink polarization",
+                "Downlink polarization",
                 "DigIF Downlink center frequency",
                 "DigIF Downlink bandwidth",
                 "Minimum viable contact duration",
@@ -235,6 +236,8 @@ def update_mission_profile(gs_client, mission_profile_id):
         change_uplink_center_frequency(gs_client, mission_profile_id)
     elif update == "Uplink polarization":
         change_uplink_polarization(gs_client, mission_profile_id)
+    elif update == "Downlink polarization":
+        change_downlink_polarization(gs_client, mission_profile_id)
     elif update == "DigIF Downlink center frequency":
         change_downlink_center_frequency(gs_client, mission_profile_id)
     elif update == "DigIF Downlink bandwidth":
@@ -741,6 +744,85 @@ def change_uplink_polarization(gs_client, mission_profile_id):
 
     main()
 
+def change_downlink_polarization(gs_client, mission_profile_id):
+    downlink_conflig_id = ""
+
+    profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+
+    for config_pair in profile_data["dataflowEdges"]:
+        for config in config_pair:
+            config_id = config.split("/")[2]
+            config_type = config.split("/")[1]
+
+            if config_type == "antenna-downlink":
+                downlink_conflig_id = config_id
+                break
+
+    if not downlink_conflig_id:
+        print(
+            "There is no antenna downlink config in this mission profile. Exiting to main menu."
+        )
+        main()
+
+    downlink_config = gs_client.get_config(
+        configId=downlink_conflig_id, configType="antenna-downlink"
+    )
+
+    current_polarization = downlink_config["configData"]["antennaDownlinkConfig"]["spectrumConfig"]["polarization"]
+
+
+    polarization_question = [
+        {
+            "type": "list",
+            "name": "polarization",
+            "message": "The current downlink polarization is "
+            + str(current_polarization)
+            + "\n  Enter the desired downlink polarization.",
+            "choices": [
+                "RIGHT_HAND",
+                "LEFT_HAND"
+            ],
+        }
+    ]
+
+    polarization_answer = prompt(polarization_question)
+    polarization = polarization_answer["polarization"]
+
+
+    try:
+        response = gs_client.update_config(
+            configData={
+                "antennaDownlinkConfig": {
+                    "spectrumConfig": {
+                        "centerFrequency": {
+                            "units": "MHz",
+                            "value": downlink_config["configData"]["antennaDownlinkConfig"]["spectrumConfig"]["centerFrequency"]["value"],
+                        },
+                        "bandwidth": {
+                            "units": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["bandwidth"]["units"],
+                            "value": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["bandwidth"]["value"],
+                        },
+                        "polarization": polarization,
+                    },
+                },
+            },
+            configId=downlink_config["configId"],
+            configType=downlink_config["configType"],
+            name=downlink_config["name"],
+        )
+    except Exception as e:
+        print(e)
+    else:
+        print(
+            "Update complete. The downlink polarization has been set to: "
+            + str(polarization)
+        )
+
+    main()
 
 def change_downlink_bandwidth(gs_client, mission_profile_id):
     downlink_conflig_id = ""
@@ -925,13 +1007,14 @@ def main():
                 "Ohio (us-east-2)",
                 "Oregon (us-west-2)",
                 "Cape Town (af-south-1)",
-                "Seoul (ap-northest-2)",
-                "Sydney (ap-south-east-2)",
+                "Seoul (ap-northeast-2)",
+                "Sydney (ap-southeast-2)",
                 "Frankfurt (eu-central-1)",
                 "Ireland (eu-west-1)",
                 "Stockholm (eu-north-1)",
                 "Bahrain (me-south-1)",
                 "Sao Paulo (sa-east-1)",
+                "Singapore (ap-southeast-1)"
             ],
         }
     ]
