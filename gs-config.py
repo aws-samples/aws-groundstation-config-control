@@ -661,6 +661,49 @@ def change_downlink_center_frequency(gs_client, mission_profile_id):
 
     main()
 
+
+def  refresh_uplink_echo(gs_client, mission_profile_id):
+    uplink_echo_conflig_id = ""
+
+    profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+
+    for config_pair in profile_data["dataflowEdges"]:
+        for config in config_pair:
+            config_id = config.split("/")[2]
+            config_type = config.split("/")[1]
+
+            if config_type == "uplink-echo":
+                uplink_echo_conflig_id = config_id
+                break
+
+    if not uplink_echo_conflig_id:
+        print(
+            "There is no antenna uplink echo config in this mission profile. Exiting to main menu."
+        )
+        main()
+
+    uplink_echo_config = gs_client.get_config(
+        configId=uplink_echo_conflig_id, configType="uplink-echo"
+    )
+
+    try:
+        response = gs_client.update_config(
+            configData={
+                "uplinkEchoConfig": {
+                    "antennaUplinkConfigArn": uplink_echo_config["configData"]["uplinkEchoConfig"]["antennaUplinkConfigArn"],
+                    "enabled": uplink_echo_config["configData"]["uplinkEchoConfig"]["enabled"]
+                },
+            },
+            configId=uplink_echo_config["configId"],
+            configType=uplink_echo_config["configType"],
+            name=uplink_echo_config["name"],
+        )
+    except Exception as e:
+        print(e)
+
+    main()
+
+
 def change_uplink_polarization(gs_client, mission_profile_id):
     uplink_conflig_id = ""
 
@@ -741,6 +784,8 @@ def change_uplink_polarization(gs_client, mission_profile_id):
             "Update complete. The uplink polarization has been set to: "
             + str(polarization)
         )
+    
+    refresh_uplink_echo(gs_client, mission_profile_id)
 
     main()
 
