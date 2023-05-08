@@ -7,11 +7,17 @@
 # 1. Show details about an AWS Ground Station mission profiles
 # 2. Update the following AWS Ground Station mission profile parameters:
 #    - Mission profile name
+#    - Uplink power
+#    - Uplink center frequency
+#    - Uplink polarization
+#    - Downlink polarization
+#    - DigIF Downlink center frequency
+#    - DigIF Downlink bandwidth
 #    - Minimum viable contact duration
 #    - Contact prepass duration
 #    - Contact postpass duration
 #    - Antenna tracking
-#    - Uplink power
+# 3. Show AWS Ground Station minute usage
 
 # It uses your default credentials stored in the /.aws folder
 
@@ -160,12 +166,21 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
         for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(
             dataflowEndpointGroupId=dataflow_endpoint_group_id
         )["endpointsDetails"]:
-            dataflow_endpoint_name = dataflow_endpoint["endpoint"]["name"]
-            if dataflow_endpoint_name in endpoint_name_list:
-                selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
-                break
+            if(dataflow_endpoint):
+                if( "endpoint" in dataflow_endpoint.keys()):
+                    endpoint_type = "endpoint"
+                    dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
+                    if dataflow_endpoint_name in endpoint_name_list:
+                        selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
+                        break
+                if( "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys()):
+                    endpoint_type = "awsGroundStationAgentEndpoint"
+                    dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
+                    if dataflow_endpoint_name in endpoint_name_list:
+                        selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
+                        break
 
-    dataflow_endpoint_group_id = selected_dataflow_endpoint_group_id
+                dataflow_endpoint_group_id = selected_dataflow_endpoint_group_id
     if not dataflow_endpoint_group_id:
         print(
             "There are no dataflow endpoints in this mission profile that are part of a dataflow endpoint group."
@@ -178,23 +193,43 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
     print("Data Flow Endpoints in this Group:")
     print("--------------------------------------------------------------")
 
-    for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(
-        dataflowEndpointGroupId=dataflow_endpoint_group_id
-    )["endpointsDetails"]:
-        dataflow_endpoint_name = dataflow_endpoint["endpoint"]["name"]
-        dataflow_endpoint_IP = dataflow_endpoint["endpoint"]["address"]["name"]
-        dataflow_endpoint_port = str(dataflow_endpoint["endpoint"]["address"]["port"])
-        dataflow_endpoint_status = dataflow_endpoint["endpoint"]["status"]
-        dataflow_endpoint_sg = str(
-            dataflow_endpoint["securityDetails"]["securityGroupIds"]
-        ).strip("[']")
+    for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(dataflowEndpointGroupId=dataflow_endpoint_group_id)["endpointsDetails"]:
+        if( "endpoint" in dataflow_endpoint.keys()):
+                dataflow_endpoint_name = dataflow_endpoint["endpoint"]["name"]
+                dataflow_endpoint_IP = dataflow_endpoint["endpoint"]["address"]["name"]
+                dataflow_endpoint_port = str(dataflow_endpoint["endpoint"]["address"]["port"])
+                dataflow_endpoint_status = dataflow_endpoint["endpoint"]["status"]
+                dataflow_endpoint_sg = str(
+                    dataflow_endpoint["securityDetails"]["securityGroupIds"]
+                ).strip("[']")
+                dataflow_endpoint_healthStatus = dataflow_endpoint["healthStatus"]
+                dataflow_endpoint_healthReasons = str(dataflow_endpoint["healthReasons"][0])
 
-        print("Name      : " + dataflow_endpoint_name)
-        print("Status    : " + dataflow_endpoint_status)
-        print("Sec group : " + dataflow_endpoint_sg)
-        print("Target:   : " + dataflow_endpoint_IP + ":" + dataflow_endpoint_port)
-        print("")
+                print("Name          : " + dataflow_endpoint_name)
+                print("Status        : " + dataflow_endpoint_status)
+                print("Health Status : " + dataflow_endpoint_healthStatus)
+                print("Health Reason : " + dataflow_endpoint_healthReasons)
+                print("Sec group     : " + dataflow_endpoint_sg)
+                print("Target:       : " + dataflow_endpoint_IP + ":" + dataflow_endpoint_port)
+                print("")
+        if( "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys()):
+                dataflow_endpoint_name = dataflow_endpoint["awsGroundStationAgentEndpoint"]["name"]
+                dataflow_endpoint_agentStatus = dataflow_endpoint["awsGroundStationAgentEndpoint"]["agentStatus"]
+                dataflow_endpoint_auditResults = dataflow_endpoint["awsGroundStationAgentEndpoint"]["auditResults"]
+                dataflow_endpoint_egress_socket_name = dataflow_endpoint["awsGroundStationAgentEndpoint"]["egressAddress"]["socketAddress"]["name"]
+                dataflow_endpoint_egress_socket_port = str(dataflow_endpoint["awsGroundStationAgentEndpoint"]["egressAddress"]["socketAddress"]["port"])
+                dataflow_endpoint_ingress_socket_name = dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"]["socketAddress"]["name"]
+                dataflow_endpoint_ingress_socket_port_max = str(dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"]["socketAddress"]["portRange"]["maximum"])
+                dataflow_endpoint_ingress_socket_port_min = str(dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"]["socketAddress"]["portRange"]["minimum"])
+                dataflow_endpoint_healthReasons = str(dataflow_endpoint["healthReasons"][0])
 
+                print("Name          : " + dataflow_endpoint_name)
+                print("Status        : " + dataflow_endpoint_agentStatus)
+                print("Health Status : " + dataflow_endpoint_auditResults)
+                print("Health Reason : " + dataflow_endpoint_healthReasons)
+                print("Ingress       : " + dataflow_endpoint_ingress_socket_name + ":" + dataflow_endpoint_ingress_socket_port_min + "-" + dataflow_endpoint_ingress_socket_port_max)
+                print("Engress       : " + dataflow_endpoint_egress_socket_name + ":" +dataflow_endpoint_egress_socket_port)
+                print("")
     quit()
 
 
@@ -955,6 +990,73 @@ def change_downlink_bandwidth(gs_client, mission_profile_id):
     main()
 
 
+def get_service_usage(gs_client):
+
+    month_message = ("Enter the month [1-12] to view:")
+
+    month_question = [
+        {
+            "type": "input",
+            "name": "month",
+            "message": month_message,
+            "validate": MonthValidator,
+        }
+    ]
+
+    month_question_answer = prompt(month_question)
+    target_month = int(month_question_answer["month"])
+
+    year_message = ("Enter the year [YYYY] to view:")
+
+    year_question = [
+        {
+            "type": "input",
+            "name": "year",
+            "message": year_message,
+            "validate": YearValidator,
+        }
+    ]
+
+    year_question_answer = prompt(year_question)
+    target_year = int(year_question_answer["year"])
+
+    iam = boto3.resource('iam')
+    account_id = iam.CurrentUser().arn.split(':')[4]
+
+    usage = gs_client.get_minute_usage(
+        month = target_month,
+        year = target_year
+    )
+
+    print("Ground Station usage for AWS account ID: " + account_id + " during " + str(target_month) + "/" + str(target_year) + ":")
+    print("Completed minutes         : " + str(usage["totalScheduledMinutes"]))
+    print("Scheduled minutes         : " + str(usage["upcomingMinutesScheduled"]))
+    print("Reserved minutes customer : " + str(usage["isReservedMinutesCustomer"]))
+    print("Total reserved minutes    : " + str(usage["totalReservedMinuteAllocation"]))
+    print("Remaining reserved minutes: " + str(usage["estimatedMinutesRemaining"]))
+
+    main()
+
+
+class YearValidator(Validator):
+    def validate(self, document):
+        ok = regex.match("20(1[89]|2[0-7])", document.text)
+        if not ok:
+            raise ValidationError(
+                message="Please enter a valid year [YYYY] between 2018 and 2027",
+                cursor_position=len(document.text),
+            )
+
+
+class MonthValidator(Validator):
+    def validate(self, document):
+        ok = regex.match("^([1-9]|10|11|12)$", document.text)
+        if not ok:
+            raise ValidationError(
+                message="Please enter a valid month [1-12]",
+                cursor_position=len(document.text),
+            )
+
 class DurationValidator(Validator):
     def validate(self, document):
         ok = regex.match("^([1-9]|[1-9][0-9]|[1-2][0-9][0-9]|^300)$", document.text)
@@ -1031,6 +1133,7 @@ def main():
             "choices": [
                 "View mission profile",
                 "Update mission profile",
+                "View service usage", 
                 "Quit",
             ],
         }
@@ -1085,6 +1188,9 @@ def main():
         )
         print(e)
         main()
+    
+    if task == "View service usage":
+        get_service_usage(gs_client)
 
     if not mission_profile_list["missionProfileList"]:
         print("No mission profiles in " + full_region + ". Exiting to main menu.")

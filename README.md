@@ -18,6 +18,7 @@ The tool can:
    - Contact prepass duration
    - Contact postpass duration
    - Antenna tracking
+3. Show AWS Ground Station minute usage
 
 This tool is meant a debugging aid and should cannot be used to deploy full AWS Ground Station mission profiles. For such deployments the best practice is to use AWS CloudFormation templates, which can be source-code controlled. Please be mindful of any configuration drift that is introduced.
 

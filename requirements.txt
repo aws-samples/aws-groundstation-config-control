@@ -1,5 +1,5 @@
-boto3==1.21.23
-botocore==1.24.23
+boto3==1.26.129
+botocore==1.29.129
 prompt_toolkit==1.0.14
 PyInquirer==1.0.3
-regex==2022.3.15
+regex==2023.5.5
