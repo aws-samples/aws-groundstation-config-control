@@ -17,7 +17,7 @@
 #    - Contact prepass duration
 #    - Contact postpass duration
 #    - Antenna tracking
-# 3. Show AWS Ground Station minute usage
+# 3. Show AWS Ground Station reserved minute usage
 
 # It uses your default credentials stored in the /.aws folder
 
@@ -1028,10 +1028,10 @@ def get_service_usage(gs_client):
         year = target_year
     )
 
-    print("Ground Station usage for AWS account ID: " + account_id + " during " + str(target_month) + "/" + str(target_year) + ":")
+    print("AWS Ground Station reserved minute usage for AWS account ID " + account_id + " during " + str(target_month) + "/" + str(target_year) + ":")
+    print("Reserved minutes customer : " + str(usage["isReservedMinutesCustomer"]))
     print("Completed minutes         : " + str(usage["totalScheduledMinutes"]))
     print("Scheduled minutes         : " + str(usage["upcomingMinutesScheduled"]))
-    print("Reserved minutes customer : " + str(usage["isReservedMinutesCustomer"]))
     print("Total reserved minutes    : " + str(usage["totalReservedMinuteAllocation"]))
     print("Remaining reserved minutes: " + str(usage["estimatedMinutesRemaining"]))
 
@@ -1133,7 +1133,7 @@ def main():
             "choices": [
                 "View mission profile",
                 "Update mission profile",
-                "View service usage", 
+                "View reserved minute usage", 
                 "Quit",
             ],
         }
@@ -1189,7 +1189,7 @@ def main():
         print(e)
         main()
     
-    if task == "View service usage":
+    if task == "View reserved minute usage":
         get_service_usage(gs_client)
 
     if not mission_profile_list["missionProfileList"]:
