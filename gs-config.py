@@ -180,7 +180,7 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
                         selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
                         break
 
-                dataflow_endpoint_group_id = selected_dataflow_endpoint_group_id
+    dataflow_endpoint_group_id = selected_dataflow_endpoint_group_id
     if not dataflow_endpoint_group_id:
         print(
             "There are no dataflow endpoints in this mission profile that are part of a dataflow endpoint group."
