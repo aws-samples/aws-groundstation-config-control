@@ -44,6 +44,20 @@ Run the utility and follow the on screen instructions.
 python3 gs-config.py    
 ```
 
+### Known dependancy issue
+
+```bash
+File "/opt/homebrew/lib/python3.11/site-packages/prompt_toolkit/styles/from_dict.py", line 9, in <module>
+    from collections import Mapping
+ImportError: cannot import name 'Mapping' from 'collections'
+```
+
+If you get the above error from the collections library you have to do the following:
+1. `nano /opt/homebrew/lib/python3.11/site-packages/prompt_toolkit/styles/from_dict.py` 
+2. Change collections import statement from `from collections import Mapping` to `from collections.abc import Mapping`
+3. Save and quit
+
+
 ### Viewing AWS Ground Station mission profiles 
 
 ![Viewing mission profiles](view-contact.png)
