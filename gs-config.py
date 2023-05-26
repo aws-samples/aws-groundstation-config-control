@@ -73,12 +73,12 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
     profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
 
     print(
-        "Contact pre pass duruation : "
+        "Contact pre-pass duration : "
         + str(profile_data["contactPrePassDurationSeconds"])
         + "s"
     )
     print(
-        "Contact post pass duruation : "
+        "Contact post-pass duration : "
         + str(profile_data["contactPostPassDurationSeconds"])
         + "s"
     )
@@ -187,9 +187,15 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
         )
         quit()
 
+    selected_dfg_data = gs_client.get_dataflow_endpoint_group(dataflowEndpointGroupId=dataflow_endpoint_group_id)
+    dataflow_prepass_duration = str(selected_dfg_data["contactPrePassDurationSeconds"])
+    dataflow_postpass_duration = str(selected_dfg_data["contactPostPassDurationSeconds"])
+
     print("")
     print("--------------------------------------------------------------")
-    print("Data Flow Endpoint Group : " + dataflow_endpoint_group_id)
+    print("Data Flow Endpoint Group ID:                 " + dataflow_endpoint_group_id)
+    print("Data Flow Endpoint Group pre-pass duration:  " + dataflow_prepass_duration + "s")
+    print("Data Flow Endpoint Group post-pass duration: " + dataflow_postpass_duration + "s")
     print("Data Flow Endpoints in this Group:")
     print("--------------------------------------------------------------")
 
@@ -341,6 +347,61 @@ def change_mission_profile(gs_client, mission_profile_id, parameter):
             updated_profile_data["contactPrePassDurationSeconds"] = duration
         elif parameter == "postpass":
             updated_profile_data["contactPostPassDurationSeconds"] = duration
+
+        # Find dataflow endpoint group associated with this mission profile
+        # Needed to update DFEG pre/post pass durations when an UpdateDataflowEndpointGroup API is made available
+
+        profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+
+        endpoint_name_list = []
+
+        for config_pair in profile_data["dataflowEdges"]:
+            for config in config_pair:
+                config_id = config.split("/")[2]
+                config_type = config.split("/")[1]
+
+                if config_type == "dataflow-endpoint":
+                    endpoint_name = gs_client.get_config(
+                        configId=config_id, configType=config_type
+                    )["configData"]["dataflowEndpointConfig"]["dataflowEndpointName"]
+                    endpoint_name_list.append(endpoint_name)
+
+
+        dataflow_endpoint_group_list = gs_client.list_dataflow_endpoint_groups()
+
+        selected_dataflow_endpoint_group_id = ""
+
+        # select the DFEG associated with the mission profile
+        for dataflow_endpoint_group in dataflow_endpoint_group_list[
+            "dataflowEndpointGroupList"
+        ]:
+            dataflow_endpoint_group_id = dataflow_endpoint_group["dataflowEndpointGroupId"]
+            # print("**********************")
+            # print(gs_client.get_dataflow_endpoint_group(dataflowEndpointGroupId=dataflow_endpoint_group_id))
+            # print("**********************")
+            for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(
+                dataflowEndpointGroupId=dataflow_endpoint_group_id
+            )["endpointsDetails"]:
+                if(dataflow_endpoint):
+                    if( "endpoint" in dataflow_endpoint.keys()):
+                        endpoint_type = "endpoint"
+                        dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
+                        if dataflow_endpoint_name in endpoint_name_list:
+                            selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
+                            break
+                    if( "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys()):
+                        endpoint_type = "awsGroundStationAgentEndpoint"
+                        dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
+                        if dataflow_endpoint_name in endpoint_name_list:
+                            selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
+                            break
+
+        dataflow_endpoint_group_id = selected_dataflow_endpoint_group_id
+        # if not dataflow_endpoint_group_id:
+        #     print(
+        #         "There are no dataflow endpoints in this mission profile that are part of a dataflow endpoint group."
+        #     )
+        #     quit()
 
     if parameter == "name":
         name_question = [
@@ -1059,10 +1120,10 @@ class MonthValidator(Validator):
 
 class DurationValidator(Validator):
     def validate(self, document):
-        ok = regex.match("^([1-9]|[1-9][0-9]|[1-2][0-9][0-9]|^300)$", document.text)
+        ok = regex.match("^(12[0-9]|1[3-9][0-9]|2[0-9]{2}|3[0-9]{2}|4[0-7][0-9]|480)$", document.text)
         if not ok:
             raise ValidationError(
-                message="Please enter a valid duration value in seconds [1-300]",
+                message="Please enter a valid duration value in seconds [120-480]",
                 cursor_position=len(document.text),
             )
 
