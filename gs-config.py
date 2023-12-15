@@ -35,7 +35,6 @@ from prompt_toolkit.validation import Validator, ValidationError
 
 
 def get_mission_profile_list(gs_client):
-
     mission_profile_list = []
 
     responce = gs_client.list_mission_profiles()
@@ -60,7 +59,6 @@ def get_mission_profile_list(gs_client):
 
 
 def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
-
     print("========================================================================")
     print("========================================================================")
     print("Mission Profile Name : " + mission_profile_name)
@@ -122,7 +120,6 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
             )["configData"]
 
             if "antennaDownlinkDemodDecodeConfig" in config_data.keys():
-
                 decode_config = json.loads(
                     config_data["antennaDownlinkDemodDecodeConfig"]["decodeConfig"][
                         "unvalidatedJSON"
@@ -166,14 +163,14 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
         for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(
             dataflowEndpointGroupId=dataflow_endpoint_group_id
         )["endpointsDetails"]:
-            if(dataflow_endpoint):
-                if( "endpoint" in dataflow_endpoint.keys()):
+            if dataflow_endpoint:
+                if "endpoint" in dataflow_endpoint.keys():
                     endpoint_type = "endpoint"
                     dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
                     if dataflow_endpoint_name in endpoint_name_list:
                         selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
                         break
-                if( "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys()):
+                if "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys():
                     endpoint_type = "awsGroundStationAgentEndpoint"
                     dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
                     if dataflow_endpoint_name in endpoint_name_list:
@@ -187,60 +184,111 @@ def view_mission_profile(gs_client, mission_profile_id, mission_profile_name):
         )
         quit()
 
-    selected_dfg_data = gs_client.get_dataflow_endpoint_group(dataflowEndpointGroupId=dataflow_endpoint_group_id)
+    selected_dfg_data = gs_client.get_dataflow_endpoint_group(
+        dataflowEndpointGroupId=dataflow_endpoint_group_id
+    )
     dataflow_prepass_duration = str(selected_dfg_data["contactPrePassDurationSeconds"])
-    dataflow_postpass_duration = str(selected_dfg_data["contactPostPassDurationSeconds"])
+    dataflow_postpass_duration = str(
+        selected_dfg_data["contactPostPassDurationSeconds"]
+    )
 
     print("")
     print("--------------------------------------------------------------")
     print("Data Flow Endpoint Group ID:                 " + dataflow_endpoint_group_id)
-    print("Data Flow Endpoint Group pre-pass duration:  " + dataflow_prepass_duration + "s")
-    print("Data Flow Endpoint Group post-pass duration: " + dataflow_postpass_duration + "s")
+    print(
+        "Data Flow Endpoint Group pre-pass duration:  "
+        + dataflow_prepass_duration
+        + "s"
+    )
+    print(
+        "Data Flow Endpoint Group post-pass duration: "
+        + dataflow_postpass_duration
+        + "s"
+    )
     print("Data Flow Endpoints in this Group:")
     print("--------------------------------------------------------------")
 
-    for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(dataflowEndpointGroupId=dataflow_endpoint_group_id)["endpointsDetails"]:
-        if( "endpoint" in dataflow_endpoint.keys()):
-                dataflow_endpoint_name = dataflow_endpoint["endpoint"]["name"]
-                dataflow_endpoint_IP = dataflow_endpoint["endpoint"]["address"]["name"]
-                dataflow_endpoint_port = str(dataflow_endpoint["endpoint"]["address"]["port"])
-                dataflow_endpoint_status = dataflow_endpoint["endpoint"]["status"]
-                dataflow_endpoint_sg = str(
-                    dataflow_endpoint["securityDetails"]["securityGroupIds"]
-                ).strip("[']")
-                dataflow_endpoint_healthStatus = dataflow_endpoint["healthStatus"]
-                dataflow_endpoint_healthReasons = str(dataflow_endpoint["healthReasons"][0])
+    for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(
+        dataflowEndpointGroupId=dataflow_endpoint_group_id
+    )["endpointsDetails"]:
+        if "endpoint" in dataflow_endpoint.keys():
+            dataflow_endpoint_name = dataflow_endpoint["endpoint"]["name"]
+            dataflow_endpoint_IP = dataflow_endpoint["endpoint"]["address"]["name"]
+            dataflow_endpoint_port = str(
+                dataflow_endpoint["endpoint"]["address"]["port"]
+            )
+            dataflow_endpoint_status = dataflow_endpoint["endpoint"]["status"]
+            dataflow_endpoint_sg = str(
+                dataflow_endpoint["securityDetails"]["securityGroupIds"]
+            ).strip("[']")
+            dataflow_endpoint_healthStatus = dataflow_endpoint["healthStatus"]
+            dataflow_endpoint_healthReasons = str(dataflow_endpoint["healthReasons"][0])
 
-                print("Name          : " + dataflow_endpoint_name)
-                print("Status        : " + dataflow_endpoint_status)
-                print("Health Status : " + dataflow_endpoint_healthStatus)
-                print("Health Reason : " + dataflow_endpoint_healthReasons)
-                print("Sec group     : " + dataflow_endpoint_sg)
-                print("Target:       : " + dataflow_endpoint_IP + ":" + dataflow_endpoint_port)
-                print("")
-        if( "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys()):
-                dataflow_endpoint_name = dataflow_endpoint["awsGroundStationAgentEndpoint"]["name"]
-                dataflow_endpoint_agentStatus = dataflow_endpoint["awsGroundStationAgentEndpoint"]["agentStatus"]
-                dataflow_endpoint_auditResults = dataflow_endpoint["awsGroundStationAgentEndpoint"]["auditResults"]
-                dataflow_endpoint_egress_socket_name = dataflow_endpoint["awsGroundStationAgentEndpoint"]["egressAddress"]["socketAddress"]["name"]
-                dataflow_endpoint_egress_socket_port = str(dataflow_endpoint["awsGroundStationAgentEndpoint"]["egressAddress"]["socketAddress"]["port"])
-                dataflow_endpoint_ingress_socket_name = dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"]["socketAddress"]["name"]
-                dataflow_endpoint_ingress_socket_port_max = str(dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"]["socketAddress"]["portRange"]["maximum"])
-                dataflow_endpoint_ingress_socket_port_min = str(dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"]["socketAddress"]["portRange"]["minimum"])
-                dataflow_endpoint_healthReasons = str(dataflow_endpoint["healthReasons"][0])
+            print("Name          : " + dataflow_endpoint_name)
+            print("Status        : " + dataflow_endpoint_status)
+            print("Health Status : " + dataflow_endpoint_healthStatus)
+            print("Health Reason : " + dataflow_endpoint_healthReasons)
+            print("Sec group     : " + dataflow_endpoint_sg)
+            print(
+                "Target:       : " + dataflow_endpoint_IP + ":" + dataflow_endpoint_port
+            )
+            print("")
+        if "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys():
+            dataflow_endpoint_name = dataflow_endpoint["awsGroundStationAgentEndpoint"][
+                "name"
+            ]
+            dataflow_endpoint_agentStatus = dataflow_endpoint[
+                "awsGroundStationAgentEndpoint"
+            ]["agentStatus"]
+            dataflow_endpoint_auditResults = dataflow_endpoint[
+                "awsGroundStationAgentEndpoint"
+            ]["auditResults"]
+            dataflow_endpoint_egress_socket_name = dataflow_endpoint[
+                "awsGroundStationAgentEndpoint"
+            ]["egressAddress"]["socketAddress"]["name"]
+            dataflow_endpoint_egress_socket_port = str(
+                dataflow_endpoint["awsGroundStationAgentEndpoint"]["egressAddress"][
+                    "socketAddress"
+                ]["port"]
+            )
+            dataflow_endpoint_ingress_socket_name = dataflow_endpoint[
+                "awsGroundStationAgentEndpoint"
+            ]["ingressAddress"]["socketAddress"]["name"]
+            dataflow_endpoint_ingress_socket_port_max = str(
+                dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"][
+                    "socketAddress"
+                ]["portRange"]["maximum"]
+            )
+            dataflow_endpoint_ingress_socket_port_min = str(
+                dataflow_endpoint["awsGroundStationAgentEndpoint"]["ingressAddress"][
+                    "socketAddress"
+                ]["portRange"]["minimum"]
+            )
+            dataflow_endpoint_healthReasons = str(dataflow_endpoint["healthReasons"][0])
 
-                print("Name          : " + dataflow_endpoint_name)
-                print("Status        : " + dataflow_endpoint_agentStatus)
-                print("Health Status : " + dataflow_endpoint_auditResults)
-                print("Health Reason : " + dataflow_endpoint_healthReasons)
-                print("Ingress       : " + dataflow_endpoint_ingress_socket_name + ":" + dataflow_endpoint_ingress_socket_port_min + "-" + dataflow_endpoint_ingress_socket_port_max)
-                print("Engress       : " + dataflow_endpoint_egress_socket_name + ":" +dataflow_endpoint_egress_socket_port)
-                print("")
+            print("Name          : " + dataflow_endpoint_name)
+            print("Status        : " + dataflow_endpoint_agentStatus)
+            print("Health Status : " + dataflow_endpoint_auditResults)
+            print("Health Reason : " + dataflow_endpoint_healthReasons)
+            print(
+                "Ingress       : "
+                + dataflow_endpoint_ingress_socket_name
+                + ":"
+                + dataflow_endpoint_ingress_socket_port_min
+                + "-"
+                + dataflow_endpoint_ingress_socket_port_max
+            )
+            print(
+                "Engress       : "
+                + dataflow_endpoint_egress_socket_name
+                + ":"
+                + dataflow_endpoint_egress_socket_port
+            )
+            print("")
     quit()
 
 
 def update_mission_profile(gs_client, mission_profile_id):
-
     print(
         "Updating a mission profile will not update the execution parameters for existing future contacts."
     )
@@ -304,7 +352,6 @@ def update_mission_profile(gs_client, mission_profile_id):
 
 
 def change_mission_profile(gs_client, mission_profile_id, parameter):
-
     updated_profile_data = gs_client.get_mission_profile(
         missionProfileId=mission_profile_id
     )
@@ -351,7 +398,9 @@ def change_mission_profile(gs_client, mission_profile_id, parameter):
         # Find dataflow endpoint group associated with this mission profile
         # Needed to update DFEG pre/post pass durations when an UpdateDataflowEndpointGroup API is made available
 
-        profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
+        profile_data = gs_client.get_mission_profile(
+            missionProfileId=mission_profile_id
+        )
 
         endpoint_name_list = []
 
@@ -366,7 +415,6 @@ def change_mission_profile(gs_client, mission_profile_id, parameter):
                     )["configData"]["dataflowEndpointConfig"]["dataflowEndpointName"]
                     endpoint_name_list.append(endpoint_name)
 
-
         dataflow_endpoint_group_list = gs_client.list_dataflow_endpoint_groups()
 
         selected_dataflow_endpoint_group_id = ""
@@ -375,25 +423,35 @@ def change_mission_profile(gs_client, mission_profile_id, parameter):
         for dataflow_endpoint_group in dataflow_endpoint_group_list[
             "dataflowEndpointGroupList"
         ]:
-            dataflow_endpoint_group_id = dataflow_endpoint_group["dataflowEndpointGroupId"]
+            dataflow_endpoint_group_id = dataflow_endpoint_group[
+                "dataflowEndpointGroupId"
+            ]
             # print("**********************")
             # print(gs_client.get_dataflow_endpoint_group(dataflowEndpointGroupId=dataflow_endpoint_group_id))
             # print("**********************")
             for dataflow_endpoint in gs_client.get_dataflow_endpoint_group(
                 dataflowEndpointGroupId=dataflow_endpoint_group_id
             )["endpointsDetails"]:
-                if(dataflow_endpoint):
-                    if( "endpoint" in dataflow_endpoint.keys()):
+                if dataflow_endpoint:
+                    if "endpoint" in dataflow_endpoint.keys():
                         endpoint_type = "endpoint"
-                        dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
+                        dataflow_endpoint_name = dataflow_endpoint[endpoint_type][
+                            "name"
+                        ]
                         if dataflow_endpoint_name in endpoint_name_list:
-                            selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
+                            selected_dataflow_endpoint_group_id = (
+                                dataflow_endpoint_group_id
+                            )
                             break
-                    if( "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys()):
+                    if "awsGroundStationAgentEndpoint" in dataflow_endpoint.keys():
                         endpoint_type = "awsGroundStationAgentEndpoint"
-                        dataflow_endpoint_name = dataflow_endpoint[endpoint_type]["name"]
+                        dataflow_endpoint_name = dataflow_endpoint[endpoint_type][
+                            "name"
+                        ]
                         if dataflow_endpoint_name in endpoint_name_list:
-                            selected_dataflow_endpoint_group_id = dataflow_endpoint_group_id
+                            selected_dataflow_endpoint_group_id = (
+                                dataflow_endpoint_group_id
+                            )
                             break
 
         dataflow_endpoint_group_id = selected_dataflow_endpoint_group_id
@@ -673,7 +731,8 @@ def change_uplink_center_frequency(gs_client, mission_profile_id):
 
 
 def change_downlink_center_frequency(gs_client, mission_profile_id):
-    downlink_conflig_id = ""
+    downlink_config_IDs = []
+    downlink_config_id = ""
 
     profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
 
@@ -683,17 +742,61 @@ def change_downlink_center_frequency(gs_client, mission_profile_id):
             config_type = config.split("/")[1]
 
             if config_type == "antenna-downlink":
-                downlink_conflig_id = config_id
-                break
+                downlink_config_IDs.append(config_id)
 
-    if not downlink_conflig_id:
+    if not downlink_config_IDs:
         print(
             "There is no antenna digIf downlink config in this mission profile. Exiting to main menu."
         )
         main()
 
+    center_frequencies = []
+
+    for config_id in downlink_config_IDs:
+        downlink_config = gs_client.get_config(
+            configId=config_id, configType="antenna-downlink"
+        )
+
+        current_center_frequency = downlink_config["configData"][
+            "antennaDownlinkConfig"
+        ]["spectrumConfig"]["centerFrequency"]["value"]
+
+        center_frequencies.append(current_center_frequency)
+
+        center_frequency_unit = downlink_config["configData"]["antennaDownlinkConfig"][
+            "spectrumConfig"
+        ]["centerFrequency"]["units"]
+
+    if len(center_frequencies) > 1:
+        if center_frequencies[0] > center_frequencies[1]:
+            x_band_downlink_config_id = downlink_config_IDs[0]
+            s_band_downlink_config_id = downlink_config_IDs[1]
+        else:
+            s_band_downlink_config_id = downlink_config_IDs[0]
+            x_band_downlink_config_id = downlink_config_IDs[1]
+
+        band_question = [
+            {
+                "type": "list",
+                "name": "band",
+                "message": "Which frequency band would you like to use?",
+                "choices": ["S-band", "X-band"],
+            }
+        ]
+
+        band_answer = prompt(band_question)
+        band = band_answer["band"]
+
+        if band == "S-band":
+            downlink_config_id = s_band_downlink_config_id
+        else:
+            downlink_config_id = x_band_downlink_config_id
+
+    else:
+        downlink_config_id = downlink_config_IDs[0]
+
     downlink_config = gs_client.get_config(
-        configId=downlink_conflig_id, configType="antenna-downlink"
+        configId=downlink_config_id, configType="antenna-downlink"
     )
 
     current_center_frequency = downlink_config["configData"]["antennaDownlinkConfig"][
@@ -758,7 +861,7 @@ def change_downlink_center_frequency(gs_client, mission_profile_id):
     main()
 
 
-def  refresh_uplink_echo(gs_client, mission_profile_id):
+def refresh_uplink_echo(gs_client, mission_profile_id):
     uplink_echo_conflig_id = ""
 
     profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
@@ -786,8 +889,12 @@ def  refresh_uplink_echo(gs_client, mission_profile_id):
         response = gs_client.update_config(
             configData={
                 "uplinkEchoConfig": {
-                    "antennaUplinkConfigArn": uplink_echo_config["configData"]["uplinkEchoConfig"]["antennaUplinkConfigArn"],
-                    "enabled": uplink_echo_config["configData"]["uplinkEchoConfig"]["enabled"]
+                    "antennaUplinkConfigArn": uplink_echo_config["configData"][
+                        "uplinkEchoConfig"
+                    ]["antennaUplinkConfigArn"],
+                    "enabled": uplink_echo_config["configData"]["uplinkEchoConfig"][
+                        "enabled"
+                    ],
                 },
             },
             configId=uplink_echo_config["configId"],
@@ -824,8 +931,9 @@ def change_uplink_polarization(gs_client, mission_profile_id):
         configId=uplink_conflig_id, configType="antenna-uplink"
     )
 
-    current_polarization = uplink_config["configData"]["antennaUplinkConfig"]["spectrumConfig"]["polarization"]
-
+    current_polarization = uplink_config["configData"]["antennaUplinkConfig"][
+        "spectrumConfig"
+    ]["polarization"]
 
     polarization_question = [
         {
@@ -834,16 +942,12 @@ def change_uplink_polarization(gs_client, mission_profile_id):
             "message": "The current uplink polarization is "
             + str(current_polarization)
             + "\n  Enter the desired uplink polarization.",
-            "choices": [
-                "RIGHT_HAND",
-                "LEFT_HAND"
-            ],
+            "choices": ["RIGHT_HAND", "LEFT_HAND"],
         }
     ]
 
     polarization_answer = prompt(polarization_question)
     polarization = polarization_answer["polarization"]
-
 
     try:
         response = gs_client.update_config(
@@ -852,7 +956,9 @@ def change_uplink_polarization(gs_client, mission_profile_id):
                     "spectrumConfig": {
                         "centerFrequency": {
                             "units": "MHz",
-                            "value": uplink_config["configData"]["antennaUplinkConfig"]["spectrumConfig"]["centerFrequency"]["value"],
+                            "value": uplink_config["configData"]["antennaUplinkConfig"][
+                                "spectrumConfig"
+                            ]["centerFrequency"]["value"],
                         },
                         "polarization": polarization,
                     },
@@ -880,13 +986,15 @@ def change_uplink_polarization(gs_client, mission_profile_id):
             "Update complete. The uplink polarization has been set to: "
             + str(polarization)
         )
-    
+
     refresh_uplink_echo(gs_client, mission_profile_id)
 
     main()
 
+
 def change_downlink_polarization(gs_client, mission_profile_id):
-    downlink_conflig_id = ""
+    downlink_config_IDs = []
+    downlink_config_id = ""
 
     profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
 
@@ -896,21 +1004,66 @@ def change_downlink_polarization(gs_client, mission_profile_id):
             config_type = config.split("/")[1]
 
             if config_type == "antenna-downlink":
-                downlink_conflig_id = config_id
-                break
+                downlink_config_IDs.append(config_id)
 
-    if not downlink_conflig_id:
+    if not downlink_config_IDs:
         print(
             "There is no antenna downlink config in this mission profile. Exiting to main menu."
         )
         main()
 
+    center_frequencies = []
+
+    for config_id in downlink_config_IDs:
+        downlink_config = gs_client.get_config(
+            configId=config_id, configType="antenna-downlink"
+        )
+
+        current_center_frequency = downlink_config["configData"][
+            "antennaDownlinkConfig"
+        ]["spectrumConfig"]["centerFrequency"]["value"]
+
+        center_frequencies.append(current_center_frequency)
+
+        center_frequency_unit = downlink_config["configData"]["antennaDownlinkConfig"][
+            "spectrumConfig"
+        ]["centerFrequency"]["units"]
+
+    if len(center_frequencies) > 1:
+        if center_frequencies[0] > center_frequencies[1]:
+            x_band_downlink_config_id = downlink_config_IDs[0]
+            s_band_downlink_config_id = downlink_config_IDs[1]
+        else:
+            s_band_downlink_config_id = downlink_config_IDs[0]
+            x_band_downlink_config_id = downlink_config_IDs[1]
+
+        band_question = [
+            {
+                "type": "list",
+                "name": "band",
+                "message": "Which frequency band would you like to use?",
+                "choices": ["S-band", "X-band"],
+            }
+        ]
+
+        band_answer = prompt(band_question)
+        band = band_answer["band"]
+
+        if band == "S-band":
+            downlink_config_id = s_band_downlink_config_id
+        else:
+            downlink_config_id = x_band_downlink_config_id
+
+    else:
+        downlink_config_id = downlink_config_IDs[0]
+
     downlink_config = gs_client.get_config(
-        configId=downlink_conflig_id, configType="antenna-downlink"
+        configId=downlink_config_id, configType="antenna-downlink"
     )
 
-    current_polarization = downlink_config["configData"]["antennaDownlinkConfig"]["spectrumConfig"]["polarization"]
-
+    current_polarization = downlink_config["configData"]["antennaDownlinkConfig"][
+        "spectrumConfig"
+    ]["polarization"]
 
     polarization_question = [
         {
@@ -919,16 +1072,12 @@ def change_downlink_polarization(gs_client, mission_profile_id):
             "message": "The current downlink polarization is "
             + str(current_polarization)
             + "\n  Enter the desired downlink polarization.",
-            "choices": [
-                "RIGHT_HAND",
-                "LEFT_HAND"
-            ],
+            "choices": ["RIGHT_HAND", "LEFT_HAND"],
         }
     ]
 
     polarization_answer = prompt(polarization_question)
     polarization = polarization_answer["polarization"]
-
 
     try:
         response = gs_client.update_config(
@@ -937,7 +1086,9 @@ def change_downlink_polarization(gs_client, mission_profile_id):
                     "spectrumConfig": {
                         "centerFrequency": {
                             "units": "MHz",
-                            "value": downlink_config["configData"]["antennaDownlinkConfig"]["spectrumConfig"]["centerFrequency"]["value"],
+                            "value": downlink_config["configData"][
+                                "antennaDownlinkConfig"
+                            ]["spectrumConfig"]["centerFrequency"]["value"],
                         },
                         "bandwidth": {
                             "units": downlink_config["configData"][
@@ -965,8 +1116,10 @@ def change_downlink_polarization(gs_client, mission_profile_id):
 
     main()
 
+
 def change_downlink_bandwidth(gs_client, mission_profile_id):
-    downlink_conflig_id = ""
+    downlink_config_IDs = []
+    downlink_config_id = ""
 
     profile_data = gs_client.get_mission_profile(missionProfileId=mission_profile_id)
 
@@ -976,17 +1129,61 @@ def change_downlink_bandwidth(gs_client, mission_profile_id):
             config_type = config.split("/")[1]
 
             if config_type == "antenna-downlink":
-                downlink_conflig_id = config_id
-                break
+                downlink_config_IDs.append(config_id)
 
-    if not downlink_conflig_id:
+    if not downlink_config_IDs:
         print(
             "There is no antenna digIf downlink config in this mission profile. Exiting to main menu."
         )
         main()
 
+    center_frequencies = []
+
+    for config_id in downlink_config_IDs:
+        downlink_config = gs_client.get_config(
+            configId=config_id, configType="antenna-downlink"
+        )
+
+        current_center_frequency = downlink_config["configData"][
+            "antennaDownlinkConfig"
+        ]["spectrumConfig"]["centerFrequency"]["value"]
+
+        center_frequencies.append(current_center_frequency)
+
+        center_frequency_unit = downlink_config["configData"]["antennaDownlinkConfig"][
+            "spectrumConfig"
+        ]["centerFrequency"]["units"]
+
+    if len(center_frequencies) > 1:
+        if center_frequencies[0] > center_frequencies[1]:
+            x_band_downlink_config_id = downlink_config_IDs[0]
+            s_band_downlink_config_id = downlink_config_IDs[1]
+        else:
+            s_band_downlink_config_id = downlink_config_IDs[0]
+            x_band_downlink_config_id = downlink_config_IDs[1]
+
+        band_question = [
+            {
+                "type": "list",
+                "name": "band",
+                "message": "Which frequency band would you like to use?",
+                "choices": ["S-band", "X-band"],
+            }
+        ]
+
+        band_answer = prompt(band_question)
+        band = band_answer["band"]
+
+        if band == "S-band":
+            downlink_config_id = s_band_downlink_config_id
+        else:
+            downlink_config_id = x_band_downlink_config_id
+
+    else:
+        downlink_config_id = downlink_config_IDs[0]
+
     downlink_config = gs_client.get_config(
-        configId=downlink_conflig_id, configType="antenna-downlink"
+        configId=downlink_config_id, configType="antenna-downlink"
     )
 
     current_bandwidth = downlink_config["configData"]["antennaDownlinkConfig"][
@@ -1052,8 +1249,7 @@ def change_downlink_bandwidth(gs_client, mission_profile_id):
 
 
 def get_service_usage(gs_client):
-
-    month_message = ("Enter the month [1-12] to view:")
+    month_message = "Enter the month [1-12] to view:"
 
     month_question = [
         {
@@ -1067,7 +1263,7 @@ def get_service_usage(gs_client):
     month_question_answer = prompt(month_question)
     target_month = int(month_question_answer["month"])
 
-    year_message = ("Enter the year [YYYY] to view:")
+    year_message = "Enter the year [YYYY] to view:"
 
     year_question = [
         {
@@ -1081,15 +1277,20 @@ def get_service_usage(gs_client):
     year_question_answer = prompt(year_question)
     target_year = int(year_question_answer["year"])
 
-    iam = boto3.resource('iam')
-    account_id = iam.CurrentUser().arn.split(':')[4]
+    iam = boto3.resource("iam")
+    account_id = iam.CurrentUser().arn.split(":")[4]
 
-    usage = gs_client.get_minute_usage(
-        month = target_month,
-        year = target_year
+    usage = gs_client.get_minute_usage(month=target_month, year=target_year)
+
+    print(
+        "AWS Ground Station reserved minute usage for AWS account ID "
+        + account_id
+        + " during "
+        + str(target_month)
+        + "/"
+        + str(target_year)
+        + ":"
     )
-
-    print("AWS Ground Station reserved minute usage for AWS account ID " + account_id + " during " + str(target_month) + "/" + str(target_year) + ":")
     print("Reserved minutes customer : " + str(usage["isReservedMinutesCustomer"]))
     print("Completed minutes         : " + str(usage["totalScheduledMinutes"]))
     print("Scheduled minutes         : " + str(usage["upcomingMinutesScheduled"]))
@@ -1118,9 +1319,12 @@ class MonthValidator(Validator):
                 cursor_position=len(document.text),
             )
 
+
 class DurationValidator(Validator):
     def validate(self, document):
-        ok = regex.match("^(12[0-9]|1[3-9][0-9]|2[0-9]{2}|3[0-9]{2}|4[0-7][0-9]|480)$", document.text)
+        ok = regex.match(
+            "^(12[0-9]|1[3-9][0-9]|2[0-9]{2}|3[0-9]{2}|4[0-7][0-9]|480)$", document.text
+        )
         if not ok:
             raise ValidationError(
                 message="Please enter a valid duration value in seconds [120-480]",
@@ -1185,7 +1389,6 @@ class DownlinkBandwidthValidator(Validator):
 
 
 def main():
-
     task_question = [
         {
             "type": "list",
@@ -1194,7 +1397,7 @@ def main():
             "choices": [
                 "View mission profile",
                 "Update mission profile",
-                "View reserved minute usage", 
+                "View reserved minute usage",
                 "Quit",
             ],
         }
@@ -1223,7 +1426,7 @@ def main():
                 "Stockholm (eu-north-1)",
                 "Bahrain (me-south-1)",
                 "Sao Paulo (sa-east-1)",
-                "Singapore (ap-southeast-1)"
+                "Singapore (ap-southeast-1)",
             ],
         }
     ]
@@ -1249,7 +1452,7 @@ def main():
         )
         print(e)
         main()
-    
+
     if task == "View reserved minute usage":
         get_service_usage(gs_client)
 
